@@ -195,9 +195,9 @@ PluginComponent {
         if (minutes > 0)
             parts.push(minutes + "m");
 
-        if (isNow)
-            parts.push(" left")
-        return parts.join("") || "<1m";
+        var result = parts.length === 0 ? "<1m" : parts.join(" ");
+
+        return isNow ? result + " left" : result;
     }
 
     function formatCompactTimeRemaining() {
