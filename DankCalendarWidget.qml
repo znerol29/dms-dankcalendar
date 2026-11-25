@@ -43,6 +43,13 @@ PluginComponent {
         var startMs = eventDate(eventStart, eventAllDay).getTime();
         return startMs - countdownNow;
     }
+    property real leftMs: {
+      if (!eventStart)
+        return -1
+      var startMs = eventDate(eventStart, eventAllDay).getTime();
+      var endMs = eventEnd ? eventDate(eventEnd, eventAllDay).getTime() : startMs;
+      return endMs - countdownNow
+    }
     property bool isNow: {
         if (nowWindowMinutes <= 0 || eventStart === "" || remainingMs > 0)
             return false;
@@ -50,9 +57,7 @@ PluginComponent {
         var startMs = eventDate(eventStart, eventAllDay).getTime();
         var endMs = eventEnd ? eventDate(eventEnd, eventAllDay).getTime() : startMs;
         var duration = endMs - startMs;
-        var maxWindow = nowWindowMinutes * 60000;
-        var nowWindow = duration < maxWindow ? duration : maxWindow;
-        return countdownNow < startMs + nowWindow;
+        return countdownNow < startMs + duration;
     }
     property bool isLessThanOneMin: !isNow && remainingMs > 0 && remainingMs < 60000
     property bool hasEvent: eventSummary !== ""
@@ -79,7 +84,6 @@ PluginComponent {
 
     Component.onCompleted: Local.AgendaController.registerRoot(root)
     Component.onDestruction: Local.AgendaController.unregisterRoot(root)
-
     function selectHighlightedEvent(events, now) {
         var active = null, next = null;
         for (var ev of events) {
@@ -175,16 +179,9 @@ PluginComponent {
         if (!hasEvent)
             return "";
 
-        if (isNow)
-            return "Now";
+        var time = isNow ? leftMs : remainingMs
 
-        if (isLessThanOneMin)
-            return "<1m";
-
-        if (remainingMs < 0)
-            return "";
-
-        var totalMinutes = Math.floor(remainingMs / 60000);
+        var totalMinutes = Math.floor(time / 60000);
         var days = Math.floor(totalMinutes / 1440);
         var hours = Math.floor((totalMinutes % 1440) / 60);
         var minutes = totalMinutes % 60;
@@ -198,6 +195,8 @@ PluginComponent {
         if (minutes > 0)
             parts.push(minutes + "m");
 
+        if (isNow)
+            parts.push(" left")
         return parts.join("") || "<1m";
     }
 
